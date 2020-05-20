@@ -71,6 +71,7 @@ namespace aprilparticle
 		harray<Emitter*> spaceEmitters;
 		Emitter* spaceEmitter = NULL;
 		harray<Affector*> spaceAffectors;
+		harray<april::Texture*> textures;
 		foreachc (Space*, it, other.spaces)
 		{
 			space = new Space(*(*it));
@@ -87,7 +88,11 @@ namespace aprilparticle
 			{
 				spaceEmitter = new Emitter(*(*it2));
 				space->registerEmitter(spaceEmitter);
-				spaceEmitter->setTexture(emitterTextureMap[(*it2)->getTexture()]);
+				textures = (*it2)->getTextures();
+				foreach (april::Texture*, it3, textures)
+				{
+					spaceEmitter->addTexture(emitterTextureMap[*it3]);
+				}
 			}
 		}
 	}
@@ -375,7 +380,7 @@ namespace aprilparticle
 			this->registerTexture(texture, name);
 			if (emitter != NULL)
 			{
-				emitter->setTexture(texture->getTexture());
+				emitter->addTexture(texture->getTexture());
 			}
 		}
 		else if (emitter != NULL && root->pexists("reference"))
@@ -386,7 +391,7 @@ namespace aprilparticle
 			{
 				throw Exception("Texture reference '" + name + "' does not exist!");
 			}
-			emitter->setTexture(texture->getTexture());
+			emitter->addTexture(texture->getTexture());
 		}
 	}
 
@@ -470,7 +475,7 @@ namespace aprilparticle
 			lines += "";
 		}
 		harray<Emitter*> emitters;
-		april::Texture* emitterTexture = NULL;
+		harray<april::Texture*> emitterTextures;
 		foreachc (Space*, it, this->spaces)
 		{
 			values.clear();
@@ -508,11 +513,14 @@ namespace aprilparticle
 							values += it3->first + "=\"" + value + "\"";
 						}
 					}
-					emitterTexture = (*it2)->getTexture();
-					if (emitterTexture != NULL)
+					emitterTextures = (*it2)->getTextures();
+					if (emitterTextures.size() > 0)
 					{
 						lines += "\t\t" + MAKE_OPEN_NODE("Emitter", values);
-						lines += "\t\t\t<Texture reference=\"" + texturesNames[emitterTexture] + "\"/>";
+						foreach (april::Texture*, it3, emitterTextures)
+						{
+							lines += "\t\t\t<Texture reference=\"" + texturesNames[*it3] + "\"/>";
+						}
 						lines += "\t\t</Emitter>";
 					}
 					else

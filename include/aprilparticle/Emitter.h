@@ -89,7 +89,7 @@ namespace aprilparticle
 		HL_DEFINE_GETSET(float, maxScale, MaxScale);
 		HL_DEFINE_GETSET(float, minAngle, MinAngle);
 		HL_DEFINE_GETSET(float, maxAngle, MaxAngle);
-		HL_DEFINE_GETSET(april::Texture*, texture, Texture);
+		HL_DEFINE_GETSET(harray<april::Texture*>, textures, Textures);
 		void setLife(float value);
 		void setDirection(cgvec3f value);
 		void setSize(cgvec2f value);
@@ -114,6 +114,8 @@ namespace aprilparticle
 		void reset();
 		void clearParticles();
 		void update(float timeDelta);
+
+		void addTexture(april::Texture* texture);
 
 		/// @note Not thread-safe!
 		void draw(cgvec3f point, cgvec3f up); // the only 3D drawing method
@@ -154,8 +156,8 @@ namespace aprilparticle
 		float maxScale;
 		float minAngle;
 		float maxAngle;
-		april::Texture* texture;
-		harray<Particle*> particles;
+		harray<april::Texture*> textures;
+		harray<harray<Particle*> > particles;
 
 		void _createNewParticle(float timeDelta);
 		inline void _setSpace(Space* value) { this->_space = value; }

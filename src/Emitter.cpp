@@ -102,7 +102,6 @@ namespace aprilparticle
 		this->maxScale = 1.0f;
 		this->minAngle = 0.0f;
 		this->maxAngle = 0.0f;
-		this->texture = NULL;
 		this->_space = NULL;
 		this->_triangleBatch = NULL;
 		this->_setupTriangleBatch();
@@ -160,7 +159,10 @@ namespace aprilparticle
 		this->maxScale = other.maxScale;
 		this->minAngle = other.minAngle;
 		this->maxAngle = other.maxAngle;
-		this->texture = NULL;
+		foreachc (april::Texture*, it, other.textures)
+		{
+			this->addTexture(*it);
+		}
 		this->_space = NULL;
 		this->_triangleBatch = NULL;
 		this->_setupTriangleBatch();
@@ -296,7 +298,8 @@ namespace aprilparticle
 
 	bool Emitter::isExpired() const
 	{
-		return (!this->running && this->particles.size() == 0);
+		HL_LAMBDA_CLASS(_noParticles, bool, ((const harray<Particle*>& particles) {return (particles.size() == 0); }));
+		return (!this->running && this->particles.matchesAll(&_noParticles::lambda));
 	}
 
 	void Emitter::setLifeRange(float min, float max)
@@ -527,7 +530,8 @@ namespace aprilparticle
 			this->_space->_particle->scale = RAND_RANGE(Scale);
 			this->_space->_particle->angle = RAND_RANGE(Angle);
 			this->_space->_particle->directionAligned = this->directionAligned;
-			this->particles += this->_space->_particle;
+			int index = (this->textures.size() > 1 ? hrand(this->textures.size()) : 0);
+			this->particles[index] += this->_space->_particle;
 			gvec3f direction = this->_space->_addNewParticle(timeDelta);
 			if (this->angleAligned && direction != gvec3f())
 			{
@@ -548,35 +552,49 @@ namespace aprilparticle
 	void Emitter::clearParticles()
 	{
 		this->alive = 0;
-		this->particles.clear();
+		foreach (harray<Particle*>, it, this->particles)
+		{
+			foreach (Particle*, it2, (*it))
+			{
+				delete (*it2);
+			}
+			(*it).clear();
+		}
 	}
 
 	void Emitter::update(float timeDelta)
 	{
 		// remove all expired particles
-		if (this->particles.size() > 0)
+		int i = 0;
+		foreach (harray<Particle*>, it, this->particles)
 		{
-			int i = 0;
-			for_iterx (i, 0, this->particles.size())
+			if ((*it).size() > 0)
 			{
-				if (!this->particles[i]->isDead())
+				i = 0;
+				for_iterx (i, 0, (*it).size())
 				{
-					break;
+					if (!(*it)[i]->isDead())
+					{
+						break;
+					}
+					// don't delete any particles, Space takes care of that
 				}
-				// don't delete any particles, Space takes care of that
-			}
-			if (i > 0)
-			{
-				this->particles.removeFirst(i);
+				if (i > 0)
+				{
+					(*it).removeFirst(i);
+				}
 			}
 		}
 		// count alive particles
 		this->alive = 0;
-		foreach (Particle*, it, this->particles)
+		foreach (harray<Particle*>, it, this->particles)
 		{
-			if (!(*it)->isDead())
+			foreach (Particle*, it2, (*it))
 			{
-				++this->alive;
+				if (!(*it2)->isDead())
+				{
+					++this->alive;
+				}
 			}
 		}
 		if (!this->enabled)
@@ -666,113 +684,119 @@ namespace aprilparticle
 		{
 			return;
 		}
-		this->_pStart = 0;
-		this->_pEnd = this->particles.size();
-		this->_pStep = 1;
-		if (this->reverseRendering)
+		for_iter (i, 0, this->particles.size())
 		{
-			this->_pStart = this->particles.size() - 1;
-			this->_pEnd = -1;
-			this->_pStep = -1;
-		}
-		this->_i = 0;
-		for (this->_pI = this->_pStart; this->_pI != this->_pEnd; this->_pI += this->_pStep)
-		{
-			this->_space->_particle = this->particles[this->_pI];
-			if (!this->_space->_particle->isDead() && this->_space->_particle->color.a > 0)
+			this->_pStart = 0;
+			this->_pEnd = this->particles[i].size();
+			this->_pStep = 1;
+			if (this->reverseRendering)
 			{
-				this->_xSize = this->_space->_particle->size.x * this->_space->_particle->scale * 0.5f;
-				this->_ySize = this->_space->_particle->size.y * this->_space->_particle->scale * 0.5f;
-				v[0].set(-this->_xSize, -this->_ySize, 0.0f);
-				v[1].set(this->_xSize, -this->_ySize, 0.0f);
-				v[2].set(-this->_xSize, this->_ySize, 0.0f);
-				v[3].set(this->_xSize, this->_ySize, 0.0f);
-				this->_rot.setRotation3D(0.0f, 0.0f, -1.0f, this->_space->_particle->angle);
-				v[0] = this->_rot * v[0];
-				v[1] = this->_rot * v[1];
-				v[2] = this->_rot * v[2];
-				v[3] = this->_rot * v[3];
-				this->_billboard.lookAt(this->_space->_particle->position, point - this->_space->_particle->position, -up);
-				this->_billboard.inverse();
-				v[0] = this->_billboard * v[0];
-				v[1] = this->_billboard * v[1];
-				v[2] = this->_billboard * v[2];
-				v[3] = this->_billboard * v[3];
-				this->_color = april::rendersys->getNativeColorUInt(this->_space->_particle->color);
-				this->_triangleBatch[this->_i].set(v[0]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[3]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+				this->_pStart = this->particles[i].size() - 1;
+				this->_pEnd = -1;
+				this->_pStep = -1;
 			}
-		}
-		if (this->_i > 0)
-		{
-			april::rendersys->setTexture(this->texture);
-			april::rendersys->setBlendMode(this->blendMode);
-			april::rendersys->setColorMode(this->colorMode, this->colorModeFactor);
-			april::rendersys->render(april::RenderOperation::TriangleList, this->_triangleBatch, this->_i);
+			this->_i = 0;
+			for (this->_pI = this->_pStart; this->_pI != this->_pEnd; this->_pI += this->_pStep)
+			{
+				this->_space->_particle = this->particles[i][this->_pI];
+				if (!this->_space->_particle->isDead() && this->_space->_particle->color.a > 0)
+				{
+					this->_xSize = this->_space->_particle->size.x * this->_space->_particle->scale * 0.5f;
+					this->_ySize = this->_space->_particle->size.y * this->_space->_particle->scale * 0.5f;
+					v[0].set(-this->_xSize, -this->_ySize, 0.0f);
+					v[1].set(this->_xSize, -this->_ySize, 0.0f);
+					v[2].set(-this->_xSize, this->_ySize, 0.0f);
+					v[3].set(this->_xSize, this->_ySize, 0.0f);
+					this->_rot.setRotation3D(0.0f, 0.0f, -1.0f, this->_space->_particle->angle);
+					v[0] = this->_rot * v[0];
+					v[1] = this->_rot * v[1];
+					v[2] = this->_rot * v[2];
+					v[3] = this->_rot * v[3];
+					this->_billboard.lookAt(this->_space->_particle->position, point - this->_space->_particle->position, -up);
+					this->_billboard.inverse();
+					v[0] = this->_billboard * v[0];
+					v[1] = this->_billboard * v[1];
+					v[2] = this->_billboard * v[2];
+					v[3] = this->_billboard * v[3];
+					this->_color = april::rendersys->getNativeColorUInt(this->_space->_particle->color);
+					this->_triangleBatch[this->_i].set(v[0]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[3]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+				}
+			}
+			if (this->_i > 0)
+			{
+				april::rendersys->setTexture(this->textures[i]);
+				april::rendersys->setBlendMode(this->blendMode);
+				april::rendersys->setColorMode(this->colorMode, this->colorModeFactor);
+				april::rendersys->render(april::RenderOperation::TriangleList, this->_triangleBatch, this->_i);
+			}
 		}
 	}
 	
 	void Emitter::draw(cgvec2f offset)
 	{
-		this->texture->loadAsync();
-		this->_w = (float)this->texture->getWidth();
-		this->_h = (float)this->texture->getHeight();
-		this->_pStart = 0;
-		this->_pEnd = this->particles.size();
-		this->_pStep = 1;
-		if (this->reverseRendering)
+		for_iter (i, 0, this->particles.size())
 		{
-			this->_pStart = this->particles.size() - 1;
-			this->_pEnd = -1;
-			this->_pStep = -1;
-		}
-		this->_i = 0;
-		for (this->_pI = this->_pStart; this->_pI != this->_pEnd; this->_pI += this->_pStep)
-		{
-			this->_space->_particle = this->particles[this->_pI];
-			if (!this->_space->_particle->isDead() && this->_space->_particle->color.a > 0)
+			this->textures[i]->loadAsync();
+			this->_w = (float)this->textures[i]->getWidth();
+			this->_h = (float)this->textures[i]->getHeight();
+			this->_pStart = 0;
+			this->_pEnd = this->particles[i].size();
+			this->_pStep = 1;
+			if (this->reverseRendering)
 			{
-				this->_xSize = this->_space->_particle->size.x * this->_w * this->_space->_particle->scale * 0.5f;
-				this->_ySize = this->_space->_particle->size.y * this->_h * this->_space->_particle->scale * 0.5f;
-				v[0].set(-this->_xSize, -this->_ySize, 0.0f);
-				v[1].set(this->_xSize, -this->_ySize, 0.0f);
-				v[2].set(-this->_xSize, this->_ySize, 0.0f);
-				v[3].set(this->_xSize, this->_ySize, 0.0f);
-				this->_offset.set(this->_space->_particle->position.x + offset.x, this->_space->_particle->position.y + offset.y, 0.0f);
-				if (this->_space->_particle->angle != 0.0f)
-				{
-					this->_rot.setRotation3D(0.0f, 0.0f, -1.0f, this->_space->_particle->angle);
-					v[0] = this->_rot * v[0] + this->_offset;
-					v[1] = this->_rot * v[1] + this->_offset;
-					v[2] = this->_rot * v[2] + this->_offset;
-					v[3] = this->_rot * v[3] + this->_offset;
-				}
-				else
-				{
-					v[0] += this->_offset;
-					v[1] += this->_offset;
-					v[2] += this->_offset;
-					v[3] += this->_offset;
-				}
-				this->_color = april::rendersys->getNativeColorUInt(this->_space->_particle->color);
-				this->_triangleBatch[this->_i].set(v[0]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[3]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+				this->_pStart = this->particles[i].size() - 1;
+				this->_pEnd = -1;
+				this->_pStep = -1;
 			}
-		}
-		if (this->_i > 0)
-		{
-			april::rendersys->setTexture(this->texture);
-			april::rendersys->setBlendMode(this->blendMode);
-			april::rendersys->setColorMode(this->colorMode, this->colorModeFactor);
-			april::rendersys->render(april::RenderOperation::TriangleList, this->_triangleBatch, this->_i);
+			this->_i = 0;
+			for (this->_pI = this->_pStart; this->_pI != this->_pEnd; this->_pI += this->_pStep)
+			{
+				this->_space->_particle = this->particles[i][this->_pI];
+				if (!this->_space->_particle->isDead() && this->_space->_particle->color.a > 0)
+				{
+					this->_xSize = this->_space->_particle->size.x * this->_w * this->_space->_particle->scale * 0.5f;
+					this->_ySize = this->_space->_particle->size.y * this->_h * this->_space->_particle->scale * 0.5f;
+					v[0].set(-this->_xSize, -this->_ySize, 0.0f);
+					v[1].set(this->_xSize, -this->_ySize, 0.0f);
+					v[2].set(-this->_xSize, this->_ySize, 0.0f);
+					v[3].set(this->_xSize, this->_ySize, 0.0f);
+					this->_offset.set(this->_space->_particle->position.x + offset.x, this->_space->_particle->position.y + offset.y, 0.0f);
+					if (this->_space->_particle->angle != 0.0f)
+					{
+						this->_rot.setRotation3D(0.0f, 0.0f, -1.0f, this->_space->_particle->angle);
+						v[0] = this->_rot * v[0] + this->_offset;
+						v[1] = this->_rot * v[1] + this->_offset;
+						v[2] = this->_rot * v[2] + this->_offset;
+						v[3] = this->_rot * v[3] + this->_offset;
+					}
+					else
+					{
+						v[0] += this->_offset;
+						v[1] += this->_offset;
+						v[2] += this->_offset;
+						v[3] += this->_offset;
+					}
+					this->_color = april::rendersys->getNativeColorUInt(this->_space->_particle->color);
+					this->_triangleBatch[this->_i].set(v[0]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[3]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+				}
+			}
+			if (this->_i > 0)
+			{
+				april::rendersys->setTexture(this->textures[i]);
+				april::rendersys->setBlendMode(this->blendMode);
+				april::rendersys->setColorMode(this->colorMode, this->colorModeFactor);
+				april::rendersys->render(april::RenderOperation::TriangleList, this->_triangleBatch, this->_i);
+			}
 		}
 	}
 	
@@ -782,62 +806,71 @@ namespace aprilparticle
 		{
 			return;
 		}
-		this->texture->loadAsync();
-		this->_w = (float)this->texture->getWidth();
-		this->_h = (float)this->texture->getHeight();
-		this->_pStart = 0;
-		this->_pEnd = this->particles.size();
-		this->_pStep = 1;
-		if (this->reverseRendering)
+		for_iter(i, 0, this->particles.size())
 		{
-			this->_pStart = this->particles.size() - 1;
-			this->_pEnd = -1;
-			this->_pStep = -1;
-		}
-		this->_i = 0;
-		for (this->_pI = this->_pStart; this->_pI != this->_pEnd; this->_pI += this->_pStep)
-		{
-			this->_space->_particle = this->particles[this->_pI];
-			if (!this->_space->_particle->isDead() && this->_space->_particle->color.a > 0)
+			this->textures[i]->loadAsync();
+			this->_w = (float)this->textures[i]->getWidth();
+			this->_h = (float)this->textures[i]->getHeight();
+			this->_pStart = 0;
+			this->_pEnd = this->particles[i].size();
+			this->_pStep = 1;
+			if (this->reverseRendering)
 			{
-				this->_xSize = this->_space->_particle->size.x * this->_w * this->_space->_particle->scale * 0.5f;
-				this->_ySize = this->_space->_particle->size.y * this->_h * this->_space->_particle->scale * 0.5f;
-				v[0].set(-this->_xSize, -this->_ySize, 0.0f);
-				v[1].set(this->_xSize, -this->_ySize, 0.0f);
-				v[2].set(-this->_xSize, this->_ySize, 0.0f);
-				v[3].set(this->_xSize, this->_ySize, 0.0f);
-				this->_offset.set(this->_space->_particle->position.x + offset.x, this->_space->_particle->position.y + offset.y, 0.0f);
-				if (this->_space->_particle->angle != 0.0f)
+				this->_pStart = this->particles[i].size() - 1;
+				this->_pEnd = -1;
+				this->_pStep = -1;
+			}
+			this->_i = 0;
+			for (this->_pI = this->_pStart; this->_pI != this->_pEnd; this->_pI += this->_pStep)
+			{
+				this->_space->_particle = this->particles[i][this->_pI];
+				if (!this->_space->_particle->isDead() && this->_space->_particle->color.a > 0)
 				{
-					this->_rot.setRotation3D(0.0f, 0.0f, -1.0f, this->_space->_particle->angle);
-					v[0] = this->_rot * v[0] + this->_offset;
-					v[1] = this->_rot * v[1] + this->_offset;
-					v[2] = this->_rot * v[2] + this->_offset;
-					v[3] = this->_rot * v[3] + this->_offset;
+					this->_xSize = this->_space->_particle->size.x * this->_w * this->_space->_particle->scale * 0.5f;
+					this->_ySize = this->_space->_particle->size.y * this->_h * this->_space->_particle->scale * 0.5f;
+					v[0].set(-this->_xSize, -this->_ySize, 0.0f);
+					v[1].set(this->_xSize, -this->_ySize, 0.0f);
+					v[2].set(-this->_xSize, this->_ySize, 0.0f);
+					v[3].set(this->_xSize, this->_ySize, 0.0f);
+					this->_offset.set(this->_space->_particle->position.x + offset.x, this->_space->_particle->position.y + offset.y, 0.0f);
+					if (this->_space->_particle->angle != 0.0f)
+					{
+						this->_rot.setRotation3D(0.0f, 0.0f, -1.0f, this->_space->_particle->angle);
+						v[0] = this->_rot * v[0] + this->_offset;
+						v[1] = this->_rot * v[1] + this->_offset;
+						v[2] = this->_rot * v[2] + this->_offset;
+						v[3] = this->_rot * v[3] + this->_offset;
+					}
+					else
+					{
+						v[0] += this->_offset;
+						v[1] += this->_offset;
+						v[2] += this->_offset;
+						v[3] += this->_offset;
+					}
+					this->_color = april::rendersys->getNativeColorUInt(this->_space->_particle->color * color);
+					this->_triangleBatch[this->_i].set(v[0]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+					this->_triangleBatch[this->_i].set(v[3]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
 				}
-				else
-				{
-					v[0] += this->_offset;
-					v[1] += this->_offset;
-					v[2] += this->_offset;
-					v[3] += this->_offset;
-				}
-				this->_color = april::rendersys->getNativeColorUInt(this->_space->_particle->color * color);
-				this->_triangleBatch[this->_i].set(v[0]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[1]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[2]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
-				this->_triangleBatch[this->_i].set(v[3]);	this->_triangleBatch[this->_i].color = this->_color;		++this->_i;
+			}
+			if (this->_i > 0)
+			{
+				april::rendersys->setTexture(this->textures[i]);
+				april::rendersys->setBlendMode(this->blendMode);
+				april::rendersys->setColorMode(this->colorMode, this->colorModeFactor);
+				april::rendersys->render(april::RenderOperation::TriangleList, this->_triangleBatch, this->_i);
 			}
 		}
-		if (this->_i > 0)
-		{
-			april::rendersys->setTexture(this->texture);
-			april::rendersys->setBlendMode(this->blendMode);
-			april::rendersys->setColorMode(this->colorMode, this->colorModeFactor);
-			april::rendersys->render(april::RenderOperation::TriangleList, this->_triangleBatch, this->_i);
-		}
+	}
+
+	void Emitter::addTexture(april::Texture* texture)
+	{
+		this->textures += texture;
+		this->particles += harray<Particle*>();
 	}
 	
 }
