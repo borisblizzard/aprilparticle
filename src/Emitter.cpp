@@ -554,11 +554,8 @@ namespace aprilparticle
 		this->alive = 0;
 		foreach (harray<Particle*>, it, this->particles)
 		{
-			foreach (Particle*, it2, (*it))
-			{
-				delete (*it2);
-			}
 			(*it).clear();
+			// don't delete any particles, Space takes care of that
 		}
 	}
 
@@ -566,6 +563,7 @@ namespace aprilparticle
 	{
 		// remove all expired particles
 		int i = 0;
+		harray<Particle*> deleted;
 		foreach (harray<Particle*>, it, this->particles)
 		{
 			if ((*it).size() > 0)
@@ -581,7 +579,7 @@ namespace aprilparticle
 				}
 				if (i > 0)
 				{
-					(*it).removeFirst(i);
+					deleted += (*it).removeFirst(i);
 				}
 			}
 		}
