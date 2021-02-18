@@ -68,7 +68,7 @@ namespace aprilparticle
 		Emitter* getEmitter(chstr name) const;
 		int getParticleCount() const;
 
-		hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+		hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 		
 		void reset();
 		void load();

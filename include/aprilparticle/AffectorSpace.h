@@ -34,14 +34,14 @@ namespace aprilparticle
 			Space(cgvec3f position, float space, chstr name = "");
 			static Affector* createInstance(chstr name = "");
 
-			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 			HL_DEFINE_GETSET(gvec3f, position, Position);
 			inline void setPosition(float x, float y, float z) { this->position.set(x, y, z); }
 			HL_DEFINE_GETSET(float, radius, Radius);
 
-			hstr getProperty(chstr name);
-			bool setProperty(chstr name, chstr value);
+			hstr getProperty(chstr name) override;
+			bool setProperty(chstr name, chstr value) override;
 
 		protected:
 			gvec3f position;

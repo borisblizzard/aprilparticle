@@ -29,13 +29,13 @@ namespace aprilparticle
 		SpaceObject(chstr name = "");
 		SpaceObject(const SpaceObject& other);
 
-		hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+		hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 		HL_DEFINE_GETSET(gvec3f, position, Position);
 		inline void setPosition(float x, float y, float z) { this->position.set(x, y, z); }
 
-		hstr getProperty(chstr name);
-		bool setProperty(chstr name, chstr value);
+		hstr getProperty(chstr name) override;
+		bool setProperty(chstr name, chstr value) override;
 
 	protected:
 		gvec3f position;

@@ -41,9 +41,9 @@ namespace apriluiparticle
 
 		Base(chstr name);
 		~Base();
-		inline hstr getClassName() const { return "apriluiparticle.Base"; }
+		inline hstr getClassName() const override { return "apriluiparticle.Base"; }
 
-		hmap<hstr, aprilui::PropertyDescription>& getPropertyDescriptions() const;
+		hmap<hstr, aprilui::PropertyDescription>& getPropertyDescriptions() const override;
 
 		HL_DEFINE_GETSET(hstr, filename, Filename);
 		HL_DEFINE_GETSET(hstr, filepath, Filepath);
@@ -53,14 +53,14 @@ namespace apriluiparticle
 		bool isRunning() const;
 		bool isExpired() const;
 		
-		void notifyEvent(chstr type, aprilui::EventArgs* args);
+		void notifyEvent(chstr type, aprilui::EventArgs* args) override;
 
 		void load(chstr filename);
 		void finishSystem();
 		virtual void stopSystem();
 		virtual void resetSystem();
 		
-		bool setProperty(chstr name, chstr value);
+		bool setProperty(chstr name, chstr value) override;
 		
 	protected:
 		hstr filename;
@@ -71,8 +71,8 @@ namespace apriluiparticle
 
 		inline aprilparticle::System** _getSystemPtr() { return &this->system; }
 
-		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getGetters() const;
-		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getSetters() const;
+		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getGetters() const override;
+		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getSetters() const override;
 
 		virtual void _load();
 		virtual void _resize();

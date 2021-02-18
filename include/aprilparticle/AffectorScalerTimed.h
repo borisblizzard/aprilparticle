@@ -36,19 +36,19 @@ namespace aprilparticle
 			ScalerTimed(const hmap<float, float>& timings, chstr name = "");
 			static Affector* createInstance(chstr name = "");
 
-			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 			HL_DEFINE_GET(harray<float>, times, Times);
 			HL_DEFINE_GET(harray<float>, values, Values);
 			void setTimings(const hmap<float, float>& value);
 			void setTimings(chstr value);
 
-			hstr getProperty(chstr name);
-			bool setProperty(chstr name, chstr value);
+			hstr getProperty(chstr name) override;
+			bool setProperty(chstr name, chstr value) override;
 
 			void addTiming(float time, float value);
 			
-			void update(Particle* emitter, float timeDelta, gvec3f& movement);
+			void update(Particle* emitter, float timeDelta, gvec3f& movement) override;
 			
 		protected:
 			harray<float> times;

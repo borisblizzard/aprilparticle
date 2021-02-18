@@ -58,7 +58,7 @@ namespace aprilparticle
 		Emitter(const Emitter& other);
 		~Emitter();
 
-		hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+		hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 		HL_DEFINE_ISSET(running, Running);
 		HL_DEFINE_GETSET(Type, type, Type);
@@ -108,8 +108,8 @@ namespace aprilparticle
 		void setScaleRange(float min, float max);
 		void setAngleRange(float min, float max);
 
-		hstr getProperty(chstr name);
-		bool setProperty(chstr name, chstr value);
+		hstr getProperty(chstr name) override;
+		bool setProperty(chstr name, chstr value) override;
 
 		void reset();
 		void clearParticles();

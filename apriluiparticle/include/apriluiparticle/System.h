@@ -41,14 +41,14 @@ namespace apriluiparticle
 
 		System(chstr name);
 		~System();
-		inline hstr getClassName() const { return "apriluiparticle.System"; }
+		inline hstr getClassName() const override { return "apriluiparticle.System"; }
 		static aprilui::Object* createInstance(chstr name);
 
 		HL_DEFINE_GET(harray<Space*>, spaceObjects, SpaceObjects);
 		harray<Emitter*> getEmitterObjects() const;
 
-		void stopSystem();
-		void resetSystem();
+		void stopSystem() override;
+		void resetSystem() override;
 
 	protected:
 		bool previousExpired;
@@ -57,9 +57,9 @@ namespace apriluiparticle
 		void _registerSpaceObject(Space* spaceObject);
 		void _unregisterSpaceObject(Space* spaceObject);
 
-		void _load();
+		void _load() override;
 
-		void _update(float timeDelta);
+		void _update(float timeDelta) override;
 
 	};
 }

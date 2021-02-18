@@ -34,17 +34,17 @@ namespace aprilparticle
 			Resizer(cgvec2f startSize, cgvec2f endSize, chstr name = "");
 			static Affector* createInstance(chstr name = "");
 
-			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 			HL_DEFINE_GETSET(gvec2f, startSize, StartSize);
 			inline void setStartSize(float x, float y) { this->startSize.set(x, y); }
 			HL_DEFINE_GETSET(gvec2f, endSize, EndSize);
 			inline void setEndSize(float x, float y) { this->endSize.set(x, y); }
 				
-			hstr getProperty(chstr name);
-			bool setProperty(chstr name, chstr value);
+			hstr getProperty(chstr name) override;
+			bool setProperty(chstr name, chstr value) override;
 
-			void update(Particle* particle, float timeDelta, gvec3f& movement);
+			void update(Particle* particle, float timeDelta, gvec3f& movement) override;
 
 		protected:
 			gvec2f startSize;

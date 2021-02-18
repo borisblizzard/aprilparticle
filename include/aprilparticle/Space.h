@@ -39,7 +39,7 @@ namespace aprilparticle
 		Space(const Space& other);
 		~Space();
 
-		hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+		hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 		HL_DEFINE_GETSET(float, preUpdate, PreUpdate);
 		HL_DEFINE_GETSET(float, fixedTimeStep, FixedTimeStep);
@@ -56,8 +56,8 @@ namespace aprilparticle
 		void draw(cgvec3f point); // is the only 3D drawing method
 		void draw(cgvec2f offset, const april::Color& color = april::Color::White);
 
-		hstr getProperty(chstr name);
-		bool setProperty(chstr name, chstr value);
+		hstr getProperty(chstr name) override;
+		bool setProperty(chstr name, chstr value) override;
 
 		bool registerEmitter(Emitter* emitter);
 		bool unregisterEmitter(Emitter* emitter);

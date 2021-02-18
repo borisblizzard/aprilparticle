@@ -39,10 +39,10 @@ namespace apriluiparticle
 
 		Emitter(chstr name);
 		~Emitter();
-		inline hstr getClassName() const { return "apriluiparticle.Emitter"; }
+		inline hstr getClassName() const override { return "apriluiparticle.Emitter"; }
 		static aprilui::Object* createInstance(chstr name);
 
-		hmap<hstr, aprilui::PropertyDescription>& getPropertyDescriptions() const;
+		hmap<hstr, aprilui::PropertyDescription>& getPropertyDescriptions() const override;
 
 		HL_DEFINE_GET(Space*, spaceObject, SpaceObject);
 		HL_DEFINE_GET(aprilparticle::Emitter*, emitter, Emitter);
@@ -51,7 +51,7 @@ namespace apriluiparticle
 
 		void resetEmitter();
 
-		void notifyEvent(chstr type, aprilui::EventArgs* args);
+		void notifyEvent(chstr type, aprilui::EventArgs* args) override;
 		
 	protected:
 		Space* spaceObject;
@@ -66,11 +66,11 @@ namespace apriluiparticle
 		gvec2f emitterMinSize;
 		gvec2f emitterMaxSize;
 
-		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getGetters() const;
-		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getSetters() const;
+		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getGetters() const override;
+		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getSetters() const override;
 
-		void _update(float timeDelta);
-		void _draw();
+		void _update(float timeDelta) override;
+		void _draw() override;
 
 		void _updateEmitterData();
 		void _updateBindings();

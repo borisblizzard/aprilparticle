@@ -30,12 +30,12 @@ namespace apriluiparticle
 		APRILUI_CLONEABLE(Particle);
 	public:
 		Particle(chstr name);
-		inline hstr getClassName() const { return "apriluiparticle.Particle"; }
+		inline hstr getClassName() const override { return "apriluiparticle.Particle"; }
 		static aprilui::Object* createInstance(chstr name);
 
 	protected:
-		void _update(float timeDelta);
-		void _draw();
+		void _update(float timeDelta) override;
+		void _draw() override;
 
 	};
 }

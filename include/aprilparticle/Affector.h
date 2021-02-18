@@ -22,7 +22,7 @@
 
 #define APRILPARTICLE_CLONEABLE(type) \
 public: \
-	virtual type* clone() const { return new type(*this); } \
+	virtual type* clone() const override { return new type(*this); } \
 protected: \
 	type(const type& other);
 

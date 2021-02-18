@@ -34,16 +34,16 @@ namespace aprilparticle
 			ForceField(cgvec3f position, float radius, cgvec3f direction, chstr name = "");
 			static Affector* createInstance(chstr name = "");
 
-			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 			HL_DEFINE_GETSET(gvec3f, direction, Direction);
 			inline void setDirection(float x, float y, float z) { this->direction.set(x, y, z); }
 				
-			hstr getProperty(chstr name);
-			bool setProperty(chstr name, chstr value);
+			hstr getProperty(chstr name) override;
+			bool setProperty(chstr name, chstr value) override;
 
-			void update(Particle* article, float timeDelta, gvec3f& movement);
-			void draw();
+			void update(Particle* article, float timeDelta, gvec3f& movement) override;
+			void draw() override;
 
 		protected:
 			gvec3f direction;

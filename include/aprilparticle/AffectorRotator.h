@@ -31,14 +31,14 @@ namespace aprilparticle
 			Rotator(float rotationSpeed, chstr name = "");
 			static Affector* createInstance(chstr name = "");
 
-			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 			HL_DEFINE_GETSET(float, rotationSpeed, RotationSpeed);
 				
-			hstr getProperty(chstr name);
-			bool setProperty(chstr name, chstr value);
+			hstr getProperty(chstr name) override;
+			bool setProperty(chstr name, chstr value) override;
 
-			void update(Particle* particle, float timeDelta, gvec3f& movement);
+			void update(Particle* particle, float timeDelta, gvec3f& movement) override;
 
 		protected:
 			float rotationSpeed;

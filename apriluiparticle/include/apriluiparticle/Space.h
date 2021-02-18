@@ -42,10 +42,10 @@ namespace apriluiparticle
 
 		Space(chstr name);
 		~Space();
-		inline hstr getClassName() const { return "apriluiparticle.Space"; }
+		inline hstr getClassName() const override { return "apriluiparticle.Space"; }
 		static aprilui::Object* createInstance(chstr name);
 
-		hmap<hstr, aprilui::PropertyDescription>& getPropertyDescriptions() const;
+		hmap<hstr, aprilui::PropertyDescription>& getPropertyDescriptions() const override;
 
 		HL_DEFINE_GET(System*, systemObject, SystemObject);
 		HL_DEFINE_GET(harray<Emitter*>, emitterObjects, EmitterObjects);
@@ -53,7 +53,7 @@ namespace apriluiparticle
 		HL_DEFINE_GETSET(hstr, systemObjectName, SystemObjectName);
 		HL_DEFINE_GETSET(hstr, spaceName, SpaceName);
 
-		void notifyEvent(chstr type, aprilui::EventArgs* args);
+		void notifyEvent(chstr type, aprilui::EventArgs* args) override;
 
 	protected:
 		System* systemObject;
@@ -62,11 +62,11 @@ namespace apriluiparticle
 		hstr systemObjectName;
 		hstr spaceName;
 
-		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getGetters() const;
-		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getSetters() const;
+		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getGetters() const override;
+		hmap<hstr, aprilui::PropertyDescription::Accessor*>& _getSetters() const override;
 
-		void _update(float timeDelta);
-		void _draw();
+		void _update(float timeDelta) override;
+		void _draw() override;
 
 		void _updateBindings();
 		void _tryFindSystemObject();

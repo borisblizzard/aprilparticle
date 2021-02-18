@@ -35,7 +35,7 @@ namespace aprilparticle
 			Revolutor(cgvec3f position, float radius, cgvec3f axis, float evolutionSpeed, bool clockwise, chstr name = "");
 			static Affector* createInstance(chstr name = "");
 
-			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const;
+			hmap<hstr, PropertyDescription>& getPropertyDescriptions() const override;
 
 			HL_DEFINE_GETSET(gvec3f, axis, Axis);
 			inline void setAxis(float x, float y, float z) { this->axis.set(x, y, z); }
@@ -43,10 +43,10 @@ namespace aprilparticle
 			bool isClockwise() const;
 			void setClockwise(bool value);
 			
-			hstr getProperty(chstr name);
-			bool setProperty(chstr name, chstr value);
+			hstr getProperty(chstr name) override;
+			bool setProperty(chstr name, chstr value) override;
 
-			void update(Particle* particle, float timeDelta, gvec3f& movement);
+			void update(Particle* particle, float timeDelta, gvec3f& movement) override;
 
 		protected:
 			gvec3f axis;

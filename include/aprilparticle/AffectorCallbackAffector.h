@@ -38,10 +38,10 @@ namespace aprilparticle
 			inline void (*getAffectionCallback())(CallbackAffector*, Particle*, float, gvec3f&) { return this->affectionCallback; }
 			inline void setAffectionCallback(void (*value)(CallbackAffector*, Particle*, float, gvec3f&)) { this->affectionCallback = value; }
 				
-			hstr getProperty(chstr name);
-			bool setProperty(chstr name, chstr value);
+			hstr getProperty(chstr name) override;
+			bool setProperty(chstr name, chstr value) override;
 
-			void update(Particle* particle, float timeDelta, gvec3f& movement);
+			void update(Particle* particle, float timeDelta, gvec3f& movement) override;
 
 		protected:
 			hmap<hstr, hstr> properties;
